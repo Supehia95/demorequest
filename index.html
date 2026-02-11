@@ -1,14 +1,129 @@
-<HTML>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dummy Form with Popup</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      padding: 40px;
+    }
 
+    .form-container {
+      max-width: 400px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
 
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
 
-<div style="max-width: 900px; margin: 0 auto;">
-  <iframe
-    src="https://scheduler.zoom.us/solutions-architecture/30-mins?embed=true"
-    style="width:100%; min-height:560px; border:0;"
-    frameborder="0"
-  </iframe>
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #2d8cff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #1a6fd9;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: #fff;
+      width: 90%;
+      max-width: 900px;
+      border-radius: 8px;
+      position: relative;
+      padding: 20px;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    iframe {
+      width: 100%;
+      min-height: 560px;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="form-container">
+  <h3>Dummy Form</h3>
+  <form id="dummyForm">
+    <input type="text" placeholder="First Name" required>
+    <input type="text" placeholder="Last Name" required>
+    <input type="email" placeholder="Email" required>
+    <button type="submit">Submit</button>
+  </form>
 </div>
 
-     
-</HTML>
+<!-- Modal -->
+<div class="modal" id="popupModal">
+  <div class="modal-content">
+    <span class="close-btn" id="closeModal">&times;</span>
+    <iframe
+      src="https://scheduler.zoom.us/solutions-architecture/30-mins?embed=true"
+      frameborder="0">
+    </iframe>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById("dummyForm");
+  const modal = document.getElementById("popupModal");
+  const closeBtn = document.getElementById("closeModal");
+
+  form.addEventListener("submit", function(e) {
+    e.preventDefault(); // prevent actual submission
+    modal.style.display = "flex";
+  });
+
+  closeBtn.addEventListener("click", function() {
+    modal.style.display = "none";
+  });
+
+  window.addEventListener("click", function(e) {
+    if (e.target === modal) {
+      modal.style.display = "none";
+    }
+  });
+</script>
+
+</body>
+</html>
