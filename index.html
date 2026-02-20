@@ -2,105 +2,27 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Request Demo</title>
+<title>Book Demo</title>
 
 <style>
-body{
-  font-family:Arial, sans-serif;
-  background:#f4f6f9;
-  padding:40px;
-}
-
-/* FORM */
-.form-container{
-  max-width:420px;
-  margin:0 auto;
-  background:#fff;
-  padding:22px;
-  border-radius:10px;
-  box-shadow:0 4px 14px rgba(0,0,0,0.12);
-}
-
-input,select{
-  width:100%;
-  padding:11px;
-  margin:12px 0;
-  border-radius:6px;
-  border:1px solid #ccc;
-}
-
-button{
-  width:100%;
-  padding:12px;
-  background:#2d8cff;
-  color:white;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:bold;
-}
-
-.loader{
-  display:none;
-  text-align:center;
-  margin-top:15px;
-  font-size:15px;
-}
-
-/* MODAL */
-.modal{
-  display:none;
-  position:fixed;
-  z-index:9999;
-  left:0; top:0;
-  width:100%; height:100%;
-  background:rgba(0,0,0,0.65);
-  justify-content:center;
-  align-items:center;
-}
-
-.modal-content{
-  width:90%;
-  max-width:1100px;
-  height:85vh;
-  background:white;
-  border-radius:12px;
-  overflow:hidden;
-  position:relative;
-  animation:fadeIn .25s ease;
-}
-
-@keyframes fadeIn{
-  from{ transform:scale(.95); opacity:0;}
-  to{ transform:scale(1); opacity:1;}
-}
-
-.close-btn{
-  position:absolute;
-  right:14px;
-  top:10px;
-  font-size:22px;
-  cursor:pointer;
-  z-index:10;
-  font-weight:bold;
-}
-
-iframe{
-  width:100%;
-  height:100%;
-  border:none;
-}
+body{font-family:Arial;background:#f4f6f9;padding:40px}
+.form-container{max-width:420px;margin:auto;background:#fff;padding:22px;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+input,select{width:100%;padding:11px;margin:12px 0;border-radius:6px;border:1px solid #ccc}
+button{width:100%;padding:12px;background:#2d8cff;color:#fff;border:none;border-radius:6px;font-weight:bold}
+.modal{display:none;position:fixed;z-index:9999;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.65);justify-content:center;align-items:center}
+.modal-content{width:90%;max-width:1000px;height:85vh;background:#fff;border-radius:12px;overflow:hidden;position:relative}
+.close-btn{position:absolute;right:12px;top:8px;font-size:22px;cursor:pointer;font-weight:bold}
+iframe{width:100%;height:100%;border:none}
+.loader{text-align:center;padding-top:40px;font-size:18px}
 </style>
 </head>
 
 <body>
 
 <div class="form-container">
-  <h3>Request Demo</h3>
-
-  <form id="dummyForm">
+  <h3>Book a Demo</h3>
+  <form id="demoForm">
     <input type="text" placeholder="First Name" required>
-    <input type="text" placeholder="Last Name" required>
     <input type="email" placeholder="Email" required>
 
     <select id="country" required>
@@ -109,68 +31,56 @@ iframe{
       <option value="USA">USA</option>
     </select>
 
-    <button type="submit">Continue</button>
+    <button type="submit">Schedule</button>
   </form>
-
-  <div class="loader" id="loading">🔐 Connecting securely...</div>
 </div>
 
-<!-- MODAL -->
-<div class="modal" id="iframeModal">
+<div class="modal" id="modal">
   <div class="modal-content">
-    <span class="close-btn" id="closeModal">&times;</span>
-    <iframe id="targetFrame"></iframe>
+    <span class="close-btn" id="close">&times;</span>
+    <div class="loader" id="loader">Connecting to scheduler...</div>
+    <iframe id="schedulerFrame"></iframe>
   </div>
 </div>
 
 <script>
-const SALESFORCE_ORIGIN = "https://tr1755503902062.my.site.com";
-const BRIDGE_URL = SALESFORCE_ORIGIN + "/customersupportchat/apex/demoRequestPage";
+const SALESFORCE = "https://tr1755503902062.my.site.com";
+const BRIDGE = SALESFORCE + "/customersupportchat/apex/demoRequestPage";
 
-let bridgeWindow = null;
+let bridgeWin=null;
 
-/* BUTTON CLICK */
-document.getElementById("dummyForm").addEventListener("submit", function(e){
+document.getElementById("demoForm").addEventListener("submit", e=>{
   e.preventDefault();
 
-  const country = document.getElementById("country").value;
-  if(!country) return alert("Please select country");
+  const country=document.getElementById("country").value;
+  if(!country) return alert("Select country");
 
-  /* OPEN MODAL IMMEDIATELY */
-  document.getElementById("iframeModal").style.display="flex";
-  document.getElementById("targetFrame").src = "";
-  document.getElementById("loading").style.display="block";
+  // open modal immediately
+  document.getElementById("modal").style.display="flex";
+  document.getElementById("loader").style.display="block";
+  document.getElementById("schedulerFrame").src="";
 
-  /* SILENT BACKGROUND BRIDGE */
-  bridgeWindow = window.open(
-    BRIDGE_URL + "?country=" + encodeURIComponent(country),
-    "bridge",
-    "popup,width=1,height=1,left=-10000,top=-10000,noopener,noreferrer"
+  // silent handshake
+  bridgeWin=window.open(
+    BRIDGE+"?country="+encodeURIComponent(country),
+    "sfbridge",
+    "width=1,height=1,left=-10000,top=-10000"
   );
-
-  /* KEEP FOCUS ON PAGE */
-  setTimeout(() => window.focus(), 50);
 });
 
+window.addEventListener("message", e=>{
+  if(e.origin!==SALESFORCE) return;
+  if(!e.data || e.data.type!=="SCHEDULER_URL") return;
 
-/* RECEIVE URL FROM SALESFORCE */
-window.addEventListener("message", function(event){
+  if(bridgeWin && !bridgeWin.closed) bridgeWin.close();
 
-  if(event.origin !== SALESFORCE_ORIGIN) return;
-  if(!event.data || event.data.type !== "SET_IFRAME_URL") return;
-
-  if(bridgeWindow && !bridgeWindow.closed) bridgeWindow.close();
-
-  document.getElementById("loading").style.display="none";
-  document.getElementById("targetFrame").src = event.data.url;
-
+  document.getElementById("loader").style.display="none";
+  document.getElementById("schedulerFrame").src=e.data.url;
 });
 
-
-/* CLOSE MODAL */
-document.getElementById("closeModal").onclick = () => {
-  document.getElementById("iframeModal").style.display="none";
-  document.getElementById("targetFrame").src="";
+document.getElementById("close").onclick=()=>{
+  document.getElementById("modal").style.display="none";
+  document.getElementById("schedulerFrame").src="";
 };
 </script>
 
