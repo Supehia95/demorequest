@@ -1,128 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Dummy Form with Popup</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f9;
-      padding: 40px;
-    }
+<meta charset="UTF-8">
+<title>Embedded Request Flow</title>
 
-    .form-container {
-      max-width: 400px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f9;
+  padding: 40px;
+}
 
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
+/* FORM */
+.form-container {
+  max-width: 420px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 22px;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+}
 
-    button {
-      width: 100%;
-      padding: 10px;
-      background: #2d8cff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-    }
+input {
+  width: 100%;
+  padding: 11px;
+  margin: 12px 0;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
 
-    button:hover {
-      background: #1a6fd9;
-    }
+button {
+  width: 100%;
+  padding: 12px;
+  background: #2d8cff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 15px;
+}
 
-    /* Modal Styles */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 9999;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.6);
-      justify-content: center;
-      align-items: center;
-    }
+button:hover { background:#1a6fd9; }
 
-    .modal-content {
-      background: #fff;
-      width: 90%;
-      max-width: 900px;
-      border-radius: 8px;
-      position: relative;
-      padding: 20px;
-    }
+/* IFRAME CONTAINER */
+.viewer {
+  display: none;
+  margin-top: 30px;
+}
 
-    .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 15px;
-      font-size: 20px;
-      cursor: pointer;
-      font-weight: bold;
-    }
+iframe {
+  width: 100%;
+  height: 80vh;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
 
-    iframe {
-      width: 100%;
-      min-height: 560px;
-      border: 0;
-    }
-  </style>
+/* LOADER */
+.loader {
+  display:none;
+  text-align:center;
+  font-size:18px;
+  margin-top:20px;
+}
+</style>
 </head>
+
 <body>
 
-<div class="form-container">
-  <h3>Dummy Form</h3>
+<div class="form-container" id="formBox">
+  <h3>Request Demo</h3>
   <form id="dummyForm">
     <input type="text" placeholder="First Name" required>
     <input type="text" placeholder="Last Name" required>
     <input type="email" placeholder="Email" required>
-    <button type="submit">Submit</button>
+    <button type="submit">Continue</button>
   </form>
 </div>
 
-<!-- Modal -->
-<div class="modal" id="popupModal">
-  <div class="modal-content">
-    <span class="close-btn" id="closeModal">&times;</span>
-    <iframe
-      src="https://tr1755503902062.my.site.com/customersupportchat/apex/demoRequestPage"
-      frameborder="0">
-    </iframe>
-  </div>
+<div class="loader" id="loading">🔄 Connecting to secure service...</div>
+
+<div class="viewer" id="viewerBox">
+  <iframe id="targetFrame"></iframe>
 </div>
 
+
 <script>
-  const form = document.getElementById("dummyForm");
-  const modal = document.getElementById("popupModal");
-  const closeBtn = document.getElementById("closeModal");
+const SALESFORCE_ORIGIN = "https://tr1755503902062.my.site.com";
+const BRIDGE_URL = SALESFORCE_ORIGIN + "/customersupportchat/apex/demoRequestPage";
 
-  form.addEventListener("submit", function(e) {
-    e.preventDefault(); // prevent actual submission
-    modal.style.display = "flex";
-  });
+let bridgePopup = null;
 
-  closeBtn.addEventListener("click", function() {
-    modal.style.display = "none";
-  });
+/* ---------- FORM SUBMIT ---------- */
+document.getElementById("dummyForm").addEventListener("submit", function(e){
+    e.preventDefault();
 
-  window.addEventListener("click", function(e) {
-    if (e.target === modal) {
-      modal.style.display = "none";
+    document.getElementById("loading").style.display = "block";
+
+    bridgePopup = window.open(
+        BRIDGE_URL,
+        "sfBridge",
+        "width=500,height=650,resizable=yes,scrollbars=yes"
+    );
+});
+
+
+/* ---------- RECEIVE URL FROM SALESFORCE ---------- */
+window.addEventListener("message", function(event){
+
+    /* Security check */
+    if(event.origin !== SALESFORCE_ORIGIN) return;
+
+    if(!event.data || event.data.type !== "SET_IFRAME_URL") return;
+
+    const dynamicUrl = event.data.url;
+
+    console.log("Received secure URL:", dynamicUrl);
+
+    /* Close popup if still open */
+    if(bridgePopup && !bridgePopup.closed) bridgePopup.close();
+
+    /* Hide form */
+    document.getElementById("formBox").style.display = "none";
+    document.getElementById("loading").style.display = "none";
+
+    /* Load iframe */
+    const frame = document.getElementById("targetFrame");
+    frame.src = dynamicUrl;
+
+    document.getElementById("viewerBox").style.display = "block";
+
+});
+
+
+/* Detect popup blocked */
+setInterval(function(){
+    if(bridgePopup && bridgePopup.closed){
+        console.log("Bridge closed");
     }
-  });
+},500);
+
 </script>
 
 </body>
