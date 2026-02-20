@@ -129,22 +129,29 @@ const BRIDGE_URL = SALESFORCE_ORIGIN + "/customersupportchat/apex/demoRequestPag
 
 let bridgeWindow = null;
 
-/* SUBMIT */
+/* BUTTON CLICK */
 document.getElementById("dummyForm").addEventListener("submit", function(e){
   e.preventDefault();
 
   const country = document.getElementById("country").value;
   if(!country) return alert("Please select country");
 
+  /* OPEN MODAL IMMEDIATELY */
+  document.getElementById("iframeModal").style.display="flex";
+  document.getElementById("targetFrame").src = "";
   document.getElementById("loading").style.display="block";
 
-  // tiny hidden bridge window (user won’t notice)
+  /* SILENT BACKGROUND BRIDGE */
   bridgeWindow = window.open(
     BRIDGE_URL + "?country=" + encodeURIComponent(country),
     "bridge",
-    "width=10,height=10,left=-1000,top=-1000"
+    "popup,width=1,height=1,left=-10000,top=-10000,noopener,noreferrer"
   );
+
+  /* KEEP FOCUS ON PAGE */
+  setTimeout(() => window.focus(), 50);
 });
+
 
 /* RECEIVE URL FROM SALESFORCE */
 window.addEventListener("message", function(event){
@@ -155,18 +162,15 @@ window.addEventListener("message", function(event){
   if(bridgeWindow && !bridgeWindow.closed) bridgeWindow.close();
 
   document.getElementById("loading").style.display="none";
-
   document.getElementById("targetFrame").src = event.data.url;
-  document.getElementById("iframeModal").style.display="flex";
+
 });
 
-/* CLOSE MODAL */
-document.getElementById("closeModal").onclick = () =>
-  document.getElementById("iframeModal").style.display="none";
 
-window.onclick = function(e){
-  if(e.target === document.getElementById("iframeModal"))
-    document.getElementById("iframeModal").style.display="none";
+/* CLOSE MODAL */
+document.getElementById("closeModal").onclick = () => {
+  document.getElementById("iframeModal").style.display="none";
+  document.getElementById("targetFrame").src="";
 };
 </script>
 
