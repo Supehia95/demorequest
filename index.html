@@ -21,7 +21,7 @@ body{
   box-shadow:0 4px 14px rgba(0,0,0,0.12);
 }
 
-input, select{
+input,select{
   width:100%;
   padding:11px;
   margin:12px 0;
@@ -39,12 +39,12 @@ button{
   cursor:pointer;
   font-weight:bold;
 }
-button:hover{ background:#1a6fd9; }
 
 .loader{
+  display:none;
   text-align:center;
   margin-top:15px;
-  display:none;
+  font-size:15px;
 }
 
 /* MODAL */
@@ -52,24 +52,27 @@ button:hover{ background:#1a6fd9; }
   display:none;
   position:fixed;
   z-index:9999;
-  left:0;
-  top:0;
-  width:100%;
-  height:100%;
+  left:0; top:0;
+  width:100%; height:100%;
   background:rgba(0,0,0,0.65);
   justify-content:center;
   align-items:center;
 }
 
 .modal-content{
-  background:white;
-  width:92%;
+  width:90%;
   max-width:1100px;
   height:85vh;
+  background:white;
   border-radius:12px;
-  position:relative;
   overflow:hidden;
-  box-shadow:0 20px 50px rgba(0,0,0,0.35);
+  position:relative;
+  animation:fadeIn .25s ease;
+}
+
+@keyframes fadeIn{
+  from{ transform:scale(.95); opacity:0;}
+  to{ transform:scale(1); opacity:1;}
 }
 
 .close-btn{
@@ -78,8 +81,8 @@ button:hover{ background:#1a6fd9; }
   top:10px;
   font-size:22px;
   cursor:pointer;
-  font-weight:bold;
   z-index:10;
+  font-weight:bold;
 }
 
 iframe{
@@ -96,9 +99,9 @@ iframe{
   <h3>Request Demo</h3>
 
   <form id="dummyForm">
-    <input type="text" id="fname" placeholder="First Name" required>
-    <input type="text" id="lname" placeholder="Last Name" required>
-    <input type="email" id="email" placeholder="Email" required>
+    <input type="text" placeholder="First Name" required>
+    <input type="text" placeholder="Last Name" required>
+    <input type="email" placeholder="Email" required>
 
     <select id="country" required>
       <option value="">Select Country</option>
@@ -122,44 +125,38 @@ iframe{
 
 <script>
 const SALESFORCE_ORIGIN = "https://tr1755503902062.my.site.com";
-const BASE_BRIDGE = SALESFORCE_ORIGIN + "/customersupportchat/apex/demoRequestPage";
+const BRIDGE_URL = SALESFORCE_ORIGIN + "/customersupportchat/apex/demoRequestPage";
 
-let bridgePopup = null;
+let bridgeWindow = null;
 
-/* FORM SUBMIT */
+/* SUBMIT */
 document.getElementById("dummyForm").addEventListener("submit", function(e){
   e.preventDefault();
 
   const country = document.getElementById("country").value;
-  if(!country){
-    alert("Please select country");
-    return;
-  }
+  if(!country) return alert("Please select country");
 
   document.getElementById("loading").style.display="block";
 
-  const bridgeUrl = BASE_BRIDGE + "?country=" + encodeURIComponent(country);
-
-  bridgePopup = window.open(
-    bridgeUrl,
-    "sfBridge",
-    "width=450,height=650,resizable=yes,scrollbars=yes"
+  // tiny hidden bridge window (user won’t notice)
+  bridgeWindow = window.open(
+    BRIDGE_URL + "?country=" + encodeURIComponent(country),
+    "bridge",
+    "width=10,height=10,left=-1000,top=-1000"
   );
 });
 
-/* RECEIVE MESSAGE FROM SALESFORCE */
+/* RECEIVE URL FROM SALESFORCE */
 window.addEventListener("message", function(event){
 
   if(event.origin !== SALESFORCE_ORIGIN) return;
   if(!event.data || event.data.type !== "SET_IFRAME_URL") return;
 
-  const dynamicUrl = event.data.url;
-
-  if(bridgePopup && !bridgePopup.closed) bridgePopup.close();
+  if(bridgeWindow && !bridgeWindow.closed) bridgeWindow.close();
 
   document.getElementById("loading").style.display="none";
 
-  document.getElementById("targetFrame").src = dynamicUrl;
+  document.getElementById("targetFrame").src = event.data.url;
   document.getElementById("iframeModal").style.display="flex";
 });
 
